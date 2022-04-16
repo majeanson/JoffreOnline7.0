@@ -7,8 +7,9 @@
     "\\client\\src\\assets\\icons",
     "\\client\\src\\helpers",
     "\\client\\src\\helpers\\cards",
-    "\\client\\src\\scenes"
+    "\\client\\src\\scenes",
+    "\\client\\utils"
   ],
-  "SelectedNode": "\\client\\src\\scenes\\game.js",
+  "SelectedNode": "\\package.json",
   "PreviewInSolutionExplorer": false
 }
