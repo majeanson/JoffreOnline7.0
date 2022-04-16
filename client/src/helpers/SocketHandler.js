@@ -29,13 +29,19 @@ export default class SocketHandler {
             }
         })
 
-        scene.socket.on('cardPlayed', (socketId, cardName, index, result) => {
-            console.log(socketId, cardName, result);
+        scene.socket.on('cardPlayed', (socketId, card, index, result) => {
             if (socketId === scene.socket.id && result) {
-                return scene.DeckHandler.cardPlayed(socketId, cardName, index);
+                return scene.DeckHandler.cardPlayed(socketId, card, index);
             }
             return false;
         })
-      
+
+        scene.socket.on('cardMovedInHand', (socketId, card, index) => {
+            console.log(socketId, card);
+            if (socketId === scene.socket.id) {
+                return scene.DeckHandler.cardMovedInHand(socketId, card, index);
+            }
+            return false;
+        })              
     }
 }

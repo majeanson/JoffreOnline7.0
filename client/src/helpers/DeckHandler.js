@@ -24,11 +24,20 @@ export default class DeckHandler {
             if (foundCard) {
                 scene.aGrid.placeAtIndex(104, foundCard);
                 scene.input.setDraggable(foundCard, false);
-                console.log('card played deckhandler', socketId, cardName, index, result);
                 return result;
             }
             return false;
             
+        }
+
+        this.getCardRightBeforeIndex = (upX) => {           
+            return this.cards.findIndex(card => upX < card.x);
+        }
+
+        this.cardMovedInHand = (socketId, players) => {
+            if (socketId === scene.socket.id) {
+                scene.GameHandler.dealCards(socketId, players);
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 export default class InteractivityHandler {
     constructor(scene) {
+
         scene.input.on('dragstart', (pointer, gameObject) => {
             gameObject.setTint(0xff69b4);
             scene.children.bringToTop(gameObject);
@@ -7,6 +8,7 @@ export default class InteractivityHandler {
 
         scene.input.on('drag', (pointer, gameObject, dragX, dragY) => {
             gameObject.setTint();
+            this.lastXDrag = dragX;
             gameObject.x = dragX
             gameObject.y = dragY
         })
@@ -25,17 +27,27 @@ export default class InteractivityHandler {
             }
         });
 
-        scene.input.on('dragend', function (pointer, gameObject, dropZone) {
-            if (scene.canDrop) {
+        scene.input.on('drop', function (pointer, gameObject, dropZone) {
+            console.log(pointer, dropZone, scene.playerCardZone);
+            if (scene.canDrop && dropZone === scene.dropZone) {
                 if (scene.GameHandler.isCurrentPlayerTurnDeck()
                     && scene.GameHandler.gameState === 'gameReady') {
                     scene.socket.emit('cardPlayed', scene.socket.id, gameObject.data.list.card);
-
                 }
-                
+            } else if (dropZone === scene.playerCardZone) {
+                console.log('aaaZ');
+                const cardIndex = scene.DeckHandler.getCardRightBeforeIndex(pointer.upX);
+                scene.socket.emit('cardMovedInHand', scene.socket.id, gameObject.data.list.card, cardIndex);              
             }
             gameObject.x = gameObject.input.dragStartX;
             gameObject.y = gameObject.input.dragStartY;
+        });
+
+        scene.input.on('dragend', function (pointer, gameObject, dropped) {
+            if (!dropped) {
+                gameObject.x = gameObject.input.dragStartX;
+                gameObject.y = gameObject.input.dragStartY;
+            }
         });
 
         scene.dealCardsText?.on('pointerover', () => {

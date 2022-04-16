@@ -56,18 +56,40 @@ const getShuffledCards = () => {
     return clone;
 }
 
+const getPlayerHand = (socketId) => {
+    return players[socketId].inHand;
+}
+
 const cardPlayed = (socketId, cardName) => {
     if (canPlayCard(socketId, cardName)) {
         players[socketId].inHand = players[socketId]?.inHand?.filter(card => card !== cardName);
         currentDropZone.push(cardName);
-        console.log(cardName, players[socketId], currentDropZone);
         return true;
     }
     return false;
 }
 
-const getPlayerHand = (socketId) => {
-    return players[socketId].inHand;
+const cardMovedInHand = (socketId, card, index) => {
+
+    function arraymove(arr, fromIndex, toIndex) {
+        var element = arr[fromIndex];
+        arr.splice(fromIndex, 1);
+        arr.splice(toIndex, 0, element);
+    }
+
+    if (index > -1) {
+        const movingCardIdx = getPlayerCardIdx(socketId, card);
+        if (movingCardIdx > -1) {
+            const movingCard = getPlayerHand(socketId)[movingCardIdx];
+            arraymove(getPlayerHand(socketId), movingCardIdx, index)
+        }
+    }
+    console.log('bizz', getPlayerHand(socketId), socketId, card, index);
+    return false;
+}
+
+const getPlayerCardIdx = (socketId, card) => {
+    return getPlayerHand(socketId)?.findIndex(aCard => aCard === card);
 }
 
 const canPlayCard = (socketId, cardName) => {
@@ -163,6 +185,14 @@ io.on('connection', function (socket) {
         let result = cardPlayed(socketId, cardName);
         let index = 0;
         io.emit('cardPlayed', socketId, cardName, index, result);
+    })
+
+    socket.on('cardMovedInHand', function (socketId, card, index) {
+        console.log('server card played', socketId, card, index);
+        console.log(players);
+        cardMovedInHand(socketId, card, index);
+        console.log(players);
+        io.emit('cardMovedInHand', socketId, players);
     })
 
 

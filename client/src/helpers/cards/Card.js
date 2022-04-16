@@ -16,12 +16,15 @@ export default class Card {
             const sprite = this.getSprite(card);
             let renderedCard = scene.add.image(0, 0, sprite).setInteractive({draggable:true}).setData({
                 "card": card,
-                "sprite": sprite
+                "sprite": sprite,
+                "index": index
             });
+            
             renderedCard.enableDrag = true;
             scene.input.setDraggable(renderedCard, true);
             scene.aGrid.placeAtIndex(index, renderedCard);
-            Align.scaleToGameW(scene.game, renderedCard, 0.3);     
+            Align.scaleToGameW(scene.game, renderedCard, 0.3);
+            renderedCard.input.hitArea.setTo(0, 0, renderedCard.width, renderedCard.height);
             return renderedCard;
         }
 
