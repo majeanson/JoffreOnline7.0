@@ -158,13 +158,42 @@ const dealCards = (socketId) => {
         player.inHand = shuffledCards.splice(0, 8);
     });
 }
+const endTheTrick = () => {
+    const winningPlayerIndex = findTheWinningCardAndAddPoints();
+    currentDropZone = [];
+    players[Object.keys(players)[0]]['isMyTurn'] = false;
+    players[Object.keys(players)[1]]['isMyTurn'] = false;
+    players[Object.keys(players)[2]]['isMyTurn'] = false;
+    players[Object.keys(players)[3]]['isMyTurn'] = false;
+    players[Object.keys(players)[winningPlayerIndex]]['isMyTurn'] = true;
+
+
+    io.emit('endTheTrick', currentDropZone, players, winningPlayerIndex);
+}
+
+const findTheWinningCardAndAddPoints = () => {
+    let winningPlayerIndex = 0;
+    const requestedTrickColor = currentDropZone[0].split('_')[0];
+    let highestTrickValue = currentDropZone[0].split('_')[1];
+    currentDropZone?.forEach((card, idx) => {        
+        const cardColor = card.split('_')[0];
+        const cardValue = card.split('_')[1];
+        if (cardColor === requestedTrickColor && cardValue > highestTrickValue) {
+            highestTrickValue = cardValue;
+            winningPlayerIndex = idx;
+        }
+    });
+    players[Object.keys(players)[winningPlayerIndex]].trickPoints += 1;
+    return winningPlayerIndex;    
+}
 
 io.on('connection', function (socket) {
     if (Object.keys(players).length < 4) {
         players[socket.id] = {
             inHand: [],
             isDeckHolder: false,
-            isMyTurn: false
+            isMyTurn: false,
+            trickPoints: 0,
         }
         if (Object.keys(players).length === 1) {
             players[socket.id]['isDeckHolder'] = true;
@@ -193,7 +222,7 @@ io.on('connection', function (socket) {
 
     socket.on('dealCards', function (socketId) {
         dealCards();
-        io.emit('dealCards', socketId, players, currentDropZone);
+        io.emit('dealCards', players, currentDropZone);
     })
 
     socket.on('cardPlayed', function (socketId, cardName) {
@@ -202,6 +231,10 @@ io.on('connection', function (socket) {
             let index = currentDropZone.length;
             
             io.emit('cardPlayed', socketId, cardName, index, result, currentDropZone, players);
+            const dropZoneIsFull = currentDropZone.length === 4;
+            if (dropZoneIsFull) {
+                endTheTrick();
+            }
         }
     })
 

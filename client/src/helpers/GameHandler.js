@@ -51,7 +51,7 @@ export default class GameHandler {
             
         }
 
-        this.dealCards = (socketId, players, currentDropZone) => {
+        this.dealCards = (players, currentDropZone) => {
             this.cards = [];
             if (players) {
                 this.players = players;
@@ -99,7 +99,7 @@ export default class GameHandler {
 
 
         this.changeTurn = () => {
-            const currentTurnIdx = this.getCurrentTurnIdx();
+            let currentTurnIdx = this.getCurrentTurnIdx();
             let nextTurnIdx = currentTurnIdx + 1;
             if (nextTurnIdx === 4 /* last */) {
                 nextTurnIdx = 0;
@@ -112,6 +112,18 @@ export default class GameHandler {
                 }
             });           
             this.changeGameState(this.gameState, "C'est au joueur " + (nextTurnIdx + 1) + ' de jouer')
+        }
+
+        this.endTurn = (winningIndex) => {
+            Object.values(this.players).forEach((player, idx, arr) => {
+                if (idx === winningIndex) {
+                    arr[idx].isMyTurn = true;
+                } else {
+                    arr[idx].isMyTurn = false;
+                }
+            });
+            this.changeGameState(this.gameState, "Le joueur " + (winningIndex + 1) + ' a remporter la lev\u00E9e. \u000A' + "C'est \u00E0 son tour.");
+            scene.DeckHandler.endTurn();
         }
 
     }

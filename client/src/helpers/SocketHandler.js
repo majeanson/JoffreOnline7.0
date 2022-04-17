@@ -5,8 +5,8 @@ export default class SocketHandler {
 
         scene.socket = io('http://localhost:3000');
 
-        scene.socket.on('dealCards', (socketId, players, currentDropZone) => {
-            scene.GameHandler.dealCards(socketId, players, currentDropZone);
+        scene.socket.on('dealCards', (players, currentDropZone) => {
+            scene.GameHandler.dealCards(players, currentDropZone);
             scene.GameHandler.changeGameState('gameReady', "C'est au joueur " + (scene.GameHandler.getCurrentTurnIdx() + 1) + ' de jouer')
         })
 
@@ -38,7 +38,14 @@ export default class SocketHandler {
             if (socketId === scene.socket.id) {
                 return scene.DeckHandler.cardMovedInHand(socketId, players, currentDropZone);
             }
-            return false;
-        })              
+            return false;scene.GameHandler.changeTurn();
+        })
+
+        scene.socket.on('endTheTrick', (players, currentDropZone, winningPlayerIndex) => {
+            scene.GameHandler.endTurn(winningPlayerIndex);
+            console.log(players, currentDropZone, winningPlayerIndex);
+        })
+
+        
     }
 }

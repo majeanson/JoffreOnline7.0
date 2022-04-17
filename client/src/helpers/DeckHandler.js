@@ -18,7 +18,8 @@ export default class DeckHandler {
             cards?.forEach(card => {
                 const cardName = card?.data?.list?.card;
                 if (!this.cards?.find(aCard => aCard.data?.list?.card === cardName)) {
-                    const newCard = this.dealCard(initialIndex, card, true)                   
+                    const newCard = this.dealCard(initialIndex, card, true)
+                    this.cards?.push(newCard);
                     initialIndex = initialIndex + 1;
                 }
             });
@@ -26,6 +27,7 @@ export default class DeckHandler {
 
         this.dealRestOfCards = (cards) => {
             let initialIndex = 500; // out of bounds
+            console.log('rest of cards ', cards);
             cards?.forEach(card => {
                 const cardName = card?.data?.list?.card;
                 if (!this.cards?.find(aCard => aCard.data?.list?.card === cardName)) {
@@ -78,7 +80,7 @@ export default class DeckHandler {
         }
 
         this.dealCardsInDropzone = (currentDropZone) => {
-            
+            console.log(currentDropZone);
             this.dropZoneCards = currentDropZone;
             this.dropZoneCards?.forEach((cardName, index) => {
                 const foundCard = this.findCard(cardName);
@@ -95,8 +97,22 @@ export default class DeckHandler {
 
         this.cardMovedInHand = (socketId, players, currentDropZone) => {
             if (socketId === scene.socket.id) {
-                scene.GameHandler.dealCards(socketId, players, currentDropZone);
+                scene.GameHandler.dealCards(players, currentDropZone);
             }
+        }
+
+        this.endTurn = () => {
+            console.log(this.dropZoneCards, this.cards );
+            this.dropZoneCards?.forEach(cardName => {
+                this.cards?.forEach(card => {
+                    if (card.data?.list?.card === cardName) {
+                        console.log(cardName);
+                        card.destroy(true);
+                    }
+                });
+            });
+            this.dropZoneCards = [];
+            scene.GameHandler.dealCards(this.players, this.dropZoneCards);
         }
     }
 }
