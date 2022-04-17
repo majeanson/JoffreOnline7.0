@@ -30,6 +30,7 @@ import ru_4 from '../assets/cards/ru_4.png';
 import ru_5 from '../assets/cards/ru_5.png';
 import ru_6 from '../assets/cards/ru_6.png';
 import ru_7 from '../assets/cards/ru_7.png';
+import back from '../assets/cards/back.png';
 
 export default class CardPreloadHandler {
     constructor(scene) {
@@ -67,7 +68,7 @@ export default class CardPreloadHandler {
             scene.load.image('ru_5', ru_5);
             scene.load.image('ru_6', ru_6);
             scene.load.image('ru_7', ru_7);
-
+            scene.load.image('back', back);
         }
     }
 

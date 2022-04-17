@@ -16,13 +16,12 @@ export default class SocketHandler {
 
         scene.socket.on('changeGameState', (gameState, message = '') => {
             scene.GameHandler.changeGameState(gameState, message);
-            //scene.dealCardsText.setInteractive(); // to remove
             if (gameState === 'gameReady') {
-                scene.dealCardsText.setInteractive();
-                scene.dealCardsText.setColor('#12fdfd');
+                scene.backCard.setInteractive();
+                scene.backCard.setTint('0xffffff');
             } else {
-                scene.dealCardsText.disableInteractive(); //to readd
-                scene.dealCardsText.setColor('#00ffff');
+                scene.backCard.disableInteractive(); //to readd
+                scene.backCard.setTint(0x808080, 0xC0C0C0, 0xC0C0C0, 0x808080);
             }
         })
 

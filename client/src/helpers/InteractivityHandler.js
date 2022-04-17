@@ -31,12 +31,15 @@ export default class InteractivityHandler {
             if (scene.canDrop && dropZone === scene.dropZone) {
                 if (scene.GameHandler.isCurrentPlayerTurnDeck()
                     && scene.GameHandler.gameState === 'gameReady') {
-                    scene.socket.emit('cardPlayed', scene.socket.id, gameObject.data?.list.card);
+                    scene.socket.emit('cardPlayed', scene.socket.id, gameObject.data?.list.card);                   
+                    
                 }
             } else if (dropZone === scene.playerCardZone) {
                 const cardIndex = scene.DeckHandler.getCardRightBeforeIndex(pointer.upX);
                 scene.socket.emit('cardMovedInHand', scene.socket.id, gameObject.data.list.card, cardIndex);              
             }
+            scene.ZoneHandler.renderOutline(scene.dropZoneOutline, scene.dropZone, 0x526169);
+            scene.canDrop = false;
             gameObject.x = gameObject.input.dragStartX;
             gameObject.y = gameObject.input.dragStartY;
         });
@@ -48,17 +51,22 @@ export default class InteractivityHandler {
             }
         });
 
-        scene.dealCardsText?.on('pointerover', () => {
-            scene.dealCardsText.setColor('#ff59b4');
+        scene.backCard?.on('pointerover', () => {
+            //scene.backCard.setTint('#ff59b4');
+            scene.backCard.setTint(0xff00ff, 0xFF6600, 0xFFFF00, 0xFFFF00);
         })
 
-        scene.dealCardsText?.on('pointerdown', () => {
-            scene.dealCardsText.setColor('#ff59b4');
+        scene.backCard?.on('pointerdown', () => {
+            scene.backCard.setTint(0xFF6600, 0xff00ff, 0xFFFF00, 0xff00ff);
             scene.socket.emit("dealCards", scene.socket.id);           
         })
 
-        scene.dealCardsText?.on('pointerout', () => {
-            scene.dealCardsText.setColor('#00ffff');
+        scene.backCard?.on('pointerup', () => {
+            scene.backCard.setTint(0xff00ff, 0xFF6600, 0xFFFF00, 0xFFFF00);
+        })
+
+        scene.backCard?.on('pointerout', () => {
+            scene.backCard.setTint('0xffffff');
         })
 
     }

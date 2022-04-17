@@ -57,10 +57,20 @@ export default class DeckHandler {
             return foundCard;
         }
 
+        this.getGridIndex = (index) => {
+            switch (index) {
+                case 1: return 82; 
+                case 2: return 106;
+                case 3: return 126;
+                case 4: return 102;
+            }
+        }
+
         this.cardPlayed = (socketId, cardName, index, currentDropZone) => {
             const foundCard = this.findCard(cardName);
+            const gridIdx = this.getGridIndex(index);
             if (foundCard) {
-                scene.aGrid.placeAtIndex(104, foundCard);
+                scene.aGrid.placeAtIndex(gridIdx, foundCard);
                 scene.input.setDraggable(foundCard, false);
                 this.dropZoneCards = currentDropZone;
                 scene.children.bringToTop(foundCard);
@@ -68,12 +78,12 @@ export default class DeckHandler {
         }
 
         this.dealCardsInDropzone = (currentDropZone) => {
-            let initialIndex = 104;
+            
             this.dropZoneCards = currentDropZone;
-            this.dropZoneCards?.forEach(cardName => {
+            this.dropZoneCards?.forEach((cardName, index) => {
                 const foundCard = this.findCard(cardName);
-                if (foundCard) {
-                    scene.aGrid.placeAtIndex(initialIndex, foundCard);
+                if (foundCard) {                   
+                    scene.aGrid.placeAtIndex(this.getGridIndex(index + 1), foundCard);
                     scene.input.setDraggable(foundCard, false);
                 }               
             });

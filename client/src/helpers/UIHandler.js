@@ -8,11 +8,10 @@ export default class UIHandler{
 
         this.buildScoreZone = () => {
             scene.scoreZone = this.zoneHandler.renderZone(960, 100, 1875, 165);
-            scene.scoreZoneOutline = this.zoneHandler.renderOutline(scene.add.graphics(), scene.scoreZone, 0x421942);
         }
 
         this.buildDropZone = () => {
-            scene.dropZone = this.zoneHandler.renderZone(960, 405, 1875, 385);
+            scene.dropZone = this.zoneHandler.renderZone(-100, 350, 4650, 385);
             scene.dropZoneOutline = this.zoneHandler.renderOutline(scene.add.graphics(), scene.dropZone, 0x526169);
         }
 
@@ -22,8 +21,10 @@ export default class UIHandler{
         }
 
         this.buildGameText = () => {
-            scene.dealCardsText = scene.add.text(50, 20, "Deal cards").setFontSize(54).setFontFamily("Trebuchet MS");
-            scene.messageStatus = scene.add.text(50, 150, "Message status").setFontSize(24).setFontFamily("Trebuchet MS");
+            scene.backCard = scene.add.image(0, 0, 'back').setInteractive();
+            scene.aGrid.placeAtIndex(20, scene.backCard);
+            Align.scaleToGameW(scene.game, scene.backCard, 0.1);
+            scene.messageStatus = scene.add.text(20, 20, "Message status").setFontSize(24).setFontFamily("Trebuchet MS");
             scene.messageStatus.setText(scene.GameHandler.gameStateMessage);
             
         }
