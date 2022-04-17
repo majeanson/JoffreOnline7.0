@@ -35,16 +35,18 @@ export default class Game extends Phaser.Scene {
         this.SocketHandler = new SocketHandler(this);
         this.ZoneHandler = new ZoneHandler(this);
 
+        this.aGrid = new AlignGrid({ scene: this, rows: 22, cols: 11 });
+       // this.aGrid.showNumbers();
+
         this.UIHandler = new UIHandler(this);
         this.UIHandler.buildUI();
         this.InteractivityHandler = new InteractivityHandler(this);
 
-        this.aGrid = new AlignGrid({ scene: this, rows: 22, cols: 11 });
-        this.aGrid.showNumbers();
+        
 
     }
 
     update() {
-        this.playerCardZoneText.setText(this.socket.id);
+        this.playerCardZoneText?.setText(this.socket.id);
     }
 }

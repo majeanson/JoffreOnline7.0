@@ -8,7 +8,6 @@ export default class Card {
         this.cardFront = new CardFront(scene, card);
 
         this.getSprite = (card) => {
-            console.log(card);
             return card;
         }
 
@@ -21,10 +20,9 @@ export default class Card {
             });
             
             renderedCard.enableDrag = true;
-            scene.input.setDraggable(renderedCard, true);
-            scene.aGrid.placeAtIndex(index, renderedCard);
-            Align.scaleToGameW(scene.game, renderedCard, 0.3);
-            renderedCard.input.hitArea.setTo(0, 0, renderedCard.width, renderedCard.height);
+                scene.input.setDraggable(renderedCard, true);
+                scene.aGrid.placeAtIndex(index, renderedCard);
+                Align.scaleToGameW(scene.game, renderedCard, 0.3);
             return renderedCard;
         }
 

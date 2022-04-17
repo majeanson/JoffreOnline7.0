@@ -60,9 +60,29 @@ const getPlayerHand = (socketId) => {
     return players[socketId].inHand;
 }
 
+const getPlayerIndex = (socketId) => {
+    let foundIndex = 0;
+    Object.keys(players).forEach((aSocketId, idx) => {
+        console.log(aSocketId, idx);
+        if (aSocketId == socketId) {
+            foundIndex = idx;
+        }
+    });
+    return foundIndex;
+}
+
 const cardPlayed = (socketId, cardName) => {
+    console.log(socketId);
     if (canPlayCard(socketId, cardName)) {
-        players[socketId].inHand = players[socketId]?.inHand?.filter(card => card !== cardName);
+        players[socketId].inHand = players[socketId]?.inHand?.filter(aCardName => aCardName !== cardName);
+        players[socketId].isMyTurn = false;
+        const playerIndex = getPlayerIndex(socketId);
+        let nextPlayerIndex = playerIndex + 1;
+        if (nextPlayerIndex === 4) {
+            nextPlayerIndex = 0;
+        }
+        console.log(playerIndex, nextPlayerIndex, Object.keys(players));
+        players[Object.keys(players)[nextPlayerIndex]]['isMyTurn'] = true;
         currentDropZone.push(cardName);
         return true;
     }
@@ -80,11 +100,9 @@ const cardMovedInHand = (socketId, card, index) => {
     if (index > -1) {
         const movingCardIdx = getPlayerCardIdx(socketId, card);
         if (movingCardIdx > -1) {
-            const movingCard = getPlayerHand(socketId)[movingCardIdx];
             arraymove(getPlayerHand(socketId), movingCardIdx, index)
         }
     }
-    console.log('bizz', getPlayerHand(socketId), socketId, card, index);
     return false;
 }
 
@@ -100,14 +118,12 @@ const canPlayCard = (socketId, cardName) => {
 }
 
 const getRespectsColorPlayed = (cardName) => {
-    console.log(currentDropZone);
     if (currentDropZone.length === 0) {
         return true;
     } else {
         return currentDropZone?.some(card => {
             const cardColor = card.split('_')[0];
-            const refCardColor = cardName.split('_')[0];
-            
+            const refCardColor = cardName.split('_')[0];           
             return cardColor === refCardColor;
         });
     }
@@ -119,7 +135,6 @@ const getHasRequestedColorInHand = (socketId, cardName) => {
     } else {
         const playerHand = getPlayerHand(socketId);
         const requestedCardColor = currentDropZone[0]?.split('_')[0];
-        console.log('aaaa', requestedCardColor, playerHand, currentDropZone);
         let count = 0;
         playerHand?.forEach(card => {
             const cardColor = card.split('_')[0];
@@ -127,7 +142,6 @@ const getHasRequestedColorInHand = (socketId, cardName) => {
                 count = count = 1;
             }
         });
-        console.log(count);
         return count >= 1;
     }
 
@@ -147,24 +161,33 @@ const dealCards = (socketId) => {
         player.inHand = [];
         player.inHand = shuffledCards.splice(0, 8);
     });
-    console.log(players);
 }
 
 io.on('connection', function (socket) {
     if (Object.keys(players).length < 4) {
         players[socket.id] = {
             inHand: [],
-            isDeckHolder: false
+            isDeckHolder: false,
+            isMyTurn: false
         }
         if (Object.keys(players).length === 1) {
             players[socket.id]['isDeckHolder'] = true;
+            players[socket.id]['isMyTurn'] = true;
         }
 
         if (Object.keys(players).length === 4) {
-            io.emit('changeGameState', 'gameReady');
+            io.emit('changeGameState', 'gameReady', 'La partie peut d\u00E9buter');
+            const hasOneDeckHolder = Object.values(players).some(player => {
+                player.isDeckHolder === true;
+            });
+            if (!hasOneDeckHolder) {
+                players[Object.keys(players)[0]]['isDeckHolder'] = true;
+                players[Object.keys(players)[0]]['isMyTurn'] = true;
+            }
+
             console.log(players);
         } else {
-            io.emit('changeGameState', 'lobby');
+            io.emit('changeGameState', 'lobby', 'Le lobby doit se remplir');
         }
 
     } else {
@@ -175,24 +198,23 @@ io.on('connection', function (socket) {
     console.log('Players : ', players, 'Observators : ', observators, 'Current drope zone : ', currentDropZone);
 
     socket.on('dealCards', function (socketId) {
-        console.log('server deal cards')
         dealCards();
-        io.emit('dealCards', socketId, players);
+        console.log('aa', currentDropZone);
+        io.emit('dealCards', socketId, players, currentDropZone);
     })
 
     socket.on('cardPlayed', function (socketId, cardName) {
-        console.log('server card played')
         let result = cardPlayed(socketId, cardName);
-        let index = 0;
-        io.emit('cardPlayed', socketId, cardName, index, result);
+        if (result) {
+            let index = 0;
+            io.emit('cardPlayed', socketId, cardName, index, result, currentDropZone, players);
+            console.log('cardPlayed', players);
+        }
     })
 
     socket.on('cardMovedInHand', function (socketId, card, index) {
-        console.log('server card played', socketId, card, index);
-        console.log(players);
         cardMovedInHand(socketId, card, index);
-        console.log(players);
-        io.emit('cardMovedInHand', socketId, players);
+        io.emit('cardMovedInHand', socketId, players, currentDropZone);
     })
 
 

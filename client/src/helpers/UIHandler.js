@@ -1,4 +1,5 @@
 import ZoneHandler from './ZoneHandler';
+import Align from '../../utils/align.js';
 
 export default class UIHandler{
     constructor(scene) {
@@ -17,19 +18,20 @@ export default class UIHandler{
 
         this.buildPlayerCardZone = () => {
             scene.playerCardZone = this.zoneHandler.renderZone(960, 750, 1875, 200);
-            scene.playerCardZoneOuline = this.zoneHandler.renderOutline(scene.add.graphics(), scene.playerCardZone, 0x5e333c);
             this.buildPlayerCardText();
         }
 
         this.buildGameText = () => {
             scene.dealCardsText = scene.add.text(50, 20, "Deal cards").setFontSize(54).setFontFamily("Trebuchet MS");
+            scene.messageStatus = scene.add.text(50, 150, "Message status").setFontSize(24).setFontFamily("Trebuchet MS");
+            scene.messageStatus.setText(scene.GameHandler.gameStateMessage);
+            
         }
 
         this.buildPlayerCardText = () => {
-            const a = scene.socket.id;
-            console.log(a, scene.socket.id);
-            scene.playerCardZoneText = scene.add.text(50, 600, '').setFontSize(24).setFontFamily("Trebuchet MS");
-            scene.playerCardZoneText.setText(scene.socket.id);
+            scene.playerName = scene.add.text(0, 0, '').setFontSize(18).setFontFamily("Trebuchet MS");
+            scene.aGrid.placeAtIndex(231, scene.playerName);
+            scene.playerName.setText(scene.GameHandler.getPlayerName());
         }
 
         this.buildUI = () => {
