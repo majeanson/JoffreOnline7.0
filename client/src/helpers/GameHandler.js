@@ -3,10 +3,6 @@ export default class GameHandler {
 
         this.gameState = 'init';
         this.gameStateMessage = 'Bienvenue';
-        this.player1Deck = [];
-        this.player2Deck = [];
-        this.player3Deck = [];
-        this.player4Deck = [];
         this.playerTurn = 'player1';
 
         this.players = {};
@@ -51,40 +47,15 @@ export default class GameHandler {
             
         }
 
-        this.dealCards = (players, currentDropZone) => {
-            this.cards = [];
+        this.refreshCards = (players, currentDropZone, deadZone) => {
             if (players) {
                 this.players = players;
-                this.player1Deck = this.players[Object.keys(this.players)[0]]?.inHand;
-                this.player2Deck = this.players[Object.keys(this.players)[1]]?.inHand;
-                this.player3Deck = this.players[Object.keys(this.players)[2]]?.inHand;
-                this.player4Deck = this.players[Object.keys(this.players)[3]]?.inHand;
             }
-            this.dealCardsInHand();           
-            this.dealCardsInDropzone(currentDropZone);
-            this.dealRestOfCards();
-
-            
+            scene.DeckHandler.renderCards(players, currentDropZone, deadZone);
         }
 
         this.getCurrentPlayer = () => {
             return this.players[scene.socket.id];
-        }
-
-        this.dealCardsInHand = () => {
-            scene.DeckHandler.dealCardsInHand(this.getCurrentPlayer()?.inHand);
-        }
-        this.dealRestOfCards = () => {
-            Object.keys(this.players).forEach(socketId => {
-                if (socketId !== scene.socket.id) {
-                    scene.DeckHandler.dealRestOfCards(this.players[socketId].inHand);
-                }
-            });            
-        }
-    
-
-        this.dealCardsInDropzone = (currentDropZone) => {
-            scene.DeckHandler.dealCardsInDropzone(currentDropZone);
         }
 
         this.getCurrentTurnIdx = () => {
@@ -114,16 +85,9 @@ export default class GameHandler {
             this.changeGameState(this.gameState, "C'est au joueur " + (nextTurnIdx + 1) + ' de jouer')
         }
 
-        this.endTurn = (winningIndex) => {
-            Object.values(this.players).forEach((player, idx, arr) => {
-                if (idx === winningIndex) {
-                    arr[idx].isMyTurn = true;
-                } else {
-                    arr[idx].isMyTurn = false;
-                }
-            });
-            this.changeGameState(this.gameState, "Le joueur " + (winningIndex + 1) + ' a remporter la lev\u00E9e. \u000A' + "C'est \u00E0 son tour.");
-            scene.DeckHandler.endTurn();
+        this.endTurn = (currentDropZone, players, deadZone, winningPlayerIndex) => {
+            this.changeGameState(this.gameState, "Le joueur " + (winningPlayerIndex + 1) + ' a remporter la lev\u00E9e. \u000A' + "C'est \u00E0 son tour.");
+            scene.DeckHandler.endTurn(currentDropZone, players, deadZone);
         }
 
     }

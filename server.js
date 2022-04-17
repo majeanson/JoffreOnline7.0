@@ -6,6 +6,7 @@ const cors = require('cors');
 let players = {};
 let observators = {};
 let currentDropZone = [];
+let deadZone = [];
 
 const io = require('socket.io')(http, {
     cors: {
@@ -159,7 +160,8 @@ const dealCards = (socketId) => {
     });
 }
 const endTheTrick = () => {
-    const winningPlayerIndex = findTheWinningCardAndAddPoints();
+    const winningPlayerIndex = findTheWinningCardAndAddPoints()
+    deadZone.push(...currentDropZone);
     currentDropZone = [];
     players[Object.keys(players)[0]]['isMyTurn'] = false;
     players[Object.keys(players)[1]]['isMyTurn'] = false;
@@ -168,7 +170,7 @@ const endTheTrick = () => {
     players[Object.keys(players)[winningPlayerIndex]]['isMyTurn'] = true;
 
 
-    io.emit('endTheTrick', currentDropZone, players, winningPlayerIndex);
+    io.emit('endTheTrick', currentDropZone, players, deadZone, winningPlayerIndex);
 }
 
 const findTheWinningCardAndAddPoints = () => {
@@ -222,7 +224,7 @@ io.on('connection', function (socket) {
 
     socket.on('dealCards', function (socketId) {
         dealCards();
-        io.emit('dealCards', players, currentDropZone);
+        io.emit('refreshCards', players, currentDropZone, deadZone);
     })
 
     socket.on('cardPlayed', function (socketId, cardName) {
@@ -230,7 +232,7 @@ io.on('connection', function (socket) {
         if (result) {
             let index = currentDropZone.length;
             
-            io.emit('cardPlayed', socketId, cardName, index, result, currentDropZone, players);
+            io.emit('cardPlayed', socketId, cardName, index, result, currentDropZone, players, deadZone);
             const dropZoneIsFull = currentDropZone.length === 4;
             if (dropZoneIsFull) {
                 endTheTrick();
@@ -240,7 +242,7 @@ io.on('connection', function (socket) {
 
     socket.on('cardMovedInHand', function (socketId, card, index) {
         cardMovedInHand(socketId, card, index);
-        io.emit('cardMovedInHand', socketId, players, currentDropZone);
+        io.emit('cardMovedInHand', socketId, players, currentDropZone, deadZone);
     })
 
 

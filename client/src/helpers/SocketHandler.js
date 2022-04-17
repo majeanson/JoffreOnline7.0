@@ -5,8 +5,8 @@ export default class SocketHandler {
 
         scene.socket = io('http://localhost:3000');
 
-        scene.socket.on('dealCards', (players, currentDropZone) => {
-            scene.GameHandler.dealCards(players, currentDropZone);
+        scene.socket.on('refreshCards', (players, currentDropZone, deadDropZone) => {
+            scene.GameHandler.refreshCards(players, currentDropZone, deadDropZone);
             scene.GameHandler.changeGameState('gameReady', "C'est au joueur " + (scene.GameHandler.getCurrentTurnIdx() + 1) + ' de jouer')
         })
 
@@ -25,27 +25,26 @@ export default class SocketHandler {
             }
         })
 
-        scene.socket.on('cardPlayed', (socketId, cardName, index, result, currentDropZone, players) => {
+        scene.socket.on('cardPlayed', (socketId, cardName, index, result, currentDropZone, players, deadZone) => {
             scene.DeckHandler.cardPlayed(socketId, cardName, index, currentDropZone);
             scene.GameHandler.changeTurn();
             scene.GameHandler.players = players;
-            scene.DeckHandler.dealCardsInDropzone(currentDropZone);
+            scene.GameHandler.refreshCards(players, currentDropZone, deadZone);
             scene.playerName?.setText(scene.GameHandler.getPlayerName());
             return true;
         })
 
-        scene.socket.on('cardMovedInHand', (socketId, players, currentDropZone) => {
+        scene.socket.on('cardMovedInHand', (socketId, players, currentDropZone, deadZone) => {
             if (socketId === scene.socket.id) {
-                return scene.DeckHandler.cardMovedInHand(socketId, players, currentDropZone);
+                return scene.DeckHandler.cardMovedInHand(socketId, players, currentDropZone, deadZone);
             }
             return false;scene.GameHandler.changeTurn();
         })
 
-        scene.socket.on('endTheTrick', (players, currentDropZone, winningPlayerIndex) => {
-            scene.GameHandler.endTurn(winningPlayerIndex);
+        scene.socket.on('endTheTrick', (currentDropZone, players, deadZone, winningPlayerIndex) => {
+            scene.GameHandler.endTurn(currentDropZone, players, deadZone, winningPlayerIndex);
             console.log(players, currentDropZone, winningPlayerIndex);
         })
-
         
     }
 }

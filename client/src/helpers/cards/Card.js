@@ -11,22 +11,19 @@ export default class Card {
             return card;
         }
 
-        this.render = (index, card) => {
+        this.addCardToScene = (card, index) => {
             const sprite = this.getSprite(card);
-            let renderedCard = scene.add.image(0, 0, sprite).setInteractive({draggable:true}).setData({
+            let renderedCard = scene.add.image(0, 0, sprite).setInteractive({ draggable: true }).setData({
                 "card": card,
                 "sprite": sprite,
                 "index": index
             });
-            
             renderedCard.enableDrag = true;
-                scene.input.setDraggable(renderedCard, true);
-                scene.aGrid.placeAtIndex(index, renderedCard);
-                Align.scaleToGameW(scene.game, renderedCard, 0.3);
+            scene.input.setDraggable(renderedCard, true);
+            scene.aGrid.placeAtIndex(index, renderedCard);
+            Align.scaleToGameW(scene.game, renderedCard, 0.3);
             return renderedCard;
         }
-
-
     }
 
     

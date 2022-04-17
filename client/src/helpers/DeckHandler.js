@@ -2,61 +2,59 @@ import Card from '././cards/Card.js';
 
 export default class DeckHandler {
     constructor(scene) {
-
-        this.allCards = [];
-        this.cards = [];
+        this.cardObjects = [];
+        this.playerZoneCards = [];
         this.dropZoneCards = [];
+        this.deadZoneCards = [];
 
-        this.dealCardsInHand = (cards) => {
-
-            this.allCards = [];
-            this.dropZoneCards = [];
-            this.cards?.forEach(card => card.destroy(true));
-            this.cards = [];
-
-            let initialIndex = 199.5;
-            cards?.forEach(card => {
-                const cardName = card?.data?.list?.card;
-                if (!this.cards?.find(aCard => aCard.data?.list?.card === cardName)) {
-                    const newCard = this.dealCard(initialIndex, card, true)
-                    this.cards?.push(newCard);
-                    initialIndex = initialIndex + 1;
-                }
-            });
+        this.renderCards = (players, currentDropZone, deadZone) => {
+            console.log(players, currentDropZone, deadZone);
+            this.playerZoneCards = players[scene.socket.id].inHand;
+            this.dropZoneCards = currentDropZone;
+            this.deadZoneCards = deadZone;
+            console.log(players, currentDropZone, deadZone);
+            this.renderPlayerZoneCards();
+            this.renderDropZoneCards();
+            this.renderDeadZoneCards();
         }
 
-        this.dealRestOfCards = (cards) => {
-            let initialIndex = 500; // out of bounds
-            console.log('rest of cards ', cards);
-            cards?.forEach(card => {
-                const cardName = card?.data?.list?.card;
-                if (!this.cards?.find(aCard => aCard.data?.list?.card === cardName)) {
-                    const newCard = this.dealCard(initialIndex, card)
-                }
-            });
-        }
-
-
-        this.dealCard = (index, card, inHand = false) => {
-            let cardToDeal = new Card(scene, card);
-            const renderedCard = cardToDeal.render(index, card);
-            if (inHand) {
-                this.cards.push(renderedCard);
+        this.createAndRenderCard = (card, index) => {
+            const foundCard = this.findCard(card);
+            if (foundCard) {
+                scene.aGrid.placeAtIndex(index, foundCard);
+                return foundCard;
             } else {
-                this.allCards.push(renderedCard);
+                const newCard = new Card(scene, card);
+                const newRenderedCard = newCard.addCardToScene(card, index);
+                this.cardObjects.push(newRenderedCard);
+                return newRenderedCard;
             }
-            return renderedCard;
         }
+
+        this.renderPlayerZoneCards = () => {
+            let initialIndex = 199.5;
+            this.playerZoneCards?.forEach(card => {
+                this.createAndRenderCard(card, initialIndex);
+                initialIndex = initialIndex + 1;
+            });
+        }
+
+        this.renderDropZoneCards = () => {
+            this.dropZoneCards?.forEach((card, index) => {
+                const newCard = this.createAndRenderCard(card, this.getGridIndex(index + 1));
+                scene.input.setDraggable(newCard, false);
+            });          
+        }
+        this.renderDeadZoneCards = () => {
+            let initialIndex = 241; // out of bounds
+            this.deadZoneCards?.forEach(card => {
+                const newCard = this.createAndRenderCard(card, initialIndex);
+                scene.input.setDraggable(newCard, true);
+            });
+        }      
 
         this.findCard = (cardName) => {
-            let foundCard = this.cards?.find(card => card?.data?.list?.card === cardName);
-            if (!foundCard) {
-                foundCard = this.allCards?.find(card => card?.data?.list?.card === cardName);
-            }
-            if (!foundCard) {
-                foundCard = this.dropZoneCards?.find(card => card?.data?.list?.card === cardName);
-            }
-            return foundCard;
+            return this.cardObjects?.find(card => card?.data?.list?.card === cardName);
         }
 
         this.getGridIndex = (index) => {
@@ -79,40 +77,20 @@ export default class DeckHandler {
             }      
         }
 
-        this.dealCardsInDropzone = (currentDropZone) => {
-            console.log(currentDropZone);
-            this.dropZoneCards = currentDropZone;
-            this.dropZoneCards?.forEach((cardName, index) => {
-                const foundCard = this.findCard(cardName);
-                if (foundCard) {                   
-                    scene.aGrid.placeAtIndex(this.getGridIndex(index + 1), foundCard);
-                    scene.input.setDraggable(foundCard, false);
-                }               
-            });
-        }
-
         this.getCardRightBeforeIndex = (upX) => {           
             return this.cards.findIndex(card => upX < card.x);
         }
 
-        this.cardMovedInHand = (socketId, players, currentDropZone) => {
+        this.cardMovedInHand = (socketId, players, currentDropZone, deadZone) => {
             if (socketId === scene.socket.id) {
-                scene.GameHandler.dealCards(players, currentDropZone);
+                scene.GameHandler.refreshCards(players, currentDropZone, deadZone);
             }
         }
 
-        this.endTurn = () => {
-            console.log(this.dropZoneCards, this.cards );
-            this.dropZoneCards?.forEach(cardName => {
-                this.cards?.forEach(card => {
-                    if (card.data?.list?.card === cardName) {
-                        console.log(cardName);
-                        card.destroy(true);
-                    }
-                });
-            });
+        this.endTurn = (currentDropZone, players, deadZone) => {
+            this.deadZoneCards?.push(... this.dropZoneCards);         
             this.dropZoneCards = [];
-            scene.GameHandler.dealCards(this.players, this.dropZoneCards);
+            scene.GameHandler.refreshCards(players, currentDropZone, deadZone);
         }
     }
 }
