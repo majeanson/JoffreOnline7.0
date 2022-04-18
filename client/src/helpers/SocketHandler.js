@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 export default class SocketHandler {
     constructor(scene) {
         console.log('hey1');
-        scene.socket = io("http://192.168.2.12:3000");
+        scene.socket = io("http://192.168.2.47:3000");
 
         scene.socket.on('refreshCards', (players, currentDropZone, deadDropZone) => {
             scene.GameHandler.refreshCards(players, currentDropZone, deadDropZone);

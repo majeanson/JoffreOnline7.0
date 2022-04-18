@@ -24,15 +24,20 @@ export default class Game extends Phaser.Scene {
         this.CardPreloadHandler.preloadCards();
     }
 
+    preloadBackground = () => {
+        this.CardPreloadHandler.preloadBackground();
+    }
+
     preload() {
         this.CardPreloadHandler = new CardPreloadHandler(this);
+        this.preloadBackground();
         this.preloadCardAssets();
         this.preloadIcons();
     }
 
     create() {
         console.log('allo');
-        this.cameras.main.setBackgroundColor('#62b1d9');
+        this.cameras.main.setBackgroundColor('#f1f1f1');
         this.CardHandler = new CardHandler(this);
         this.DeckHandler = new DeckHandler(this);
         this.GameHandler = new GameHandler(this);

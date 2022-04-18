@@ -71,11 +71,11 @@ export default class GameHandler {
             }
         }
 
-        this.refreshCards = (players, currentDropZone, deadZoneDrop) => {
+        this.refreshCards = (players, currentDropZone, deadZoneDrop, mode = 'normal') => {
             if (players) {
                 this.players = players;
             }
-            scene.DeckHandler.renderCards(players, currentDropZone, deadZoneDrop);
+            scene.DeckHandler.renderCards(players, currentDropZone, deadZoneDrop, mode);
             this.refreshTexts();
         }
 

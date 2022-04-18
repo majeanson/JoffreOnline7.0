@@ -329,8 +329,6 @@ io.on('connection', function (socket) {
             }
         }
 
-    } else if (!getPlayerBySocketId(socket.id)) {
-        observators.push(socket.id);
     }
     io.emit('refreshCards', players, currentDropZone, deadZone);
     io.emit('refreshBackCard');

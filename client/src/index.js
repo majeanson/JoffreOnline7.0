@@ -11,6 +11,9 @@ if (isMobile == -1) {
         width: (window.innerWidth - 25) / 2.5,
         height: window.innerHeight - 25,
         parent: 'phaser-game',
+        physics: {
+            default: 'arcade',
+        },
         scene: [Game]
     };
 } else {
@@ -19,6 +22,9 @@ if (isMobile == -1) {
         width: window.innerWidth,
         height: window.innerHeight,
         parent: 'phaser-game',
+        physics: {
+            default: 'arcade',
+        },
         scene: [Game]
     };
 }

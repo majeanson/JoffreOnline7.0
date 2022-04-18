@@ -31,7 +31,9 @@ import ru_5 from '../assets/cards/ru_5.png';
 import ru_6 from '../assets/cards/ru_6.png';
 import ru_7 from '../assets/cards/ru_7.png';
 import back from '../assets/cards/back.png';
+import background from '../assets/icons/background.png';
 import score from '../assets/icons/score.png';
+
 export default class CardPreloadHandler {
     constructor(scene) {
 
@@ -73,6 +75,10 @@ export default class CardPreloadHandler {
 
         this.preloadIcons = () => {
             scene.load.image('score', score);
+        }
+
+        this.preloadBackground = () => {
+            scene.load.image('background', background);
         }
     }
 
