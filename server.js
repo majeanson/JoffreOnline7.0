@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const server = require('express')();
 const http = require('http').createServer(server);
 const shuffle = require('shuffle-array');
@@ -10,7 +11,7 @@ let deadZone = [];
 
 const io = require('socket.io')(http, {
     cors: {
-        origin: 'http://localhost:8080', 
+        origin: 'http://192.168.2.47:8080', 
         methods: ["GET", "POST"]
     }
 });
@@ -94,7 +95,9 @@ const cardMovedInHand = (socketId, card, index) => {
         var element = arr[fromIndex];
         arr.splice(fromIndex, 1);
         arr.splice(toIndex, 0, element);
+        console.log(arr);
     }
+    
 
     if (index > -1) {
         const movingCardIdx = getPlayerCardIdx(socketId, card);
@@ -102,6 +105,7 @@ const cardMovedInHand = (socketId, card, index) => {
             arraymove(getPlayerHand(socketId), movingCardIdx, index)
         }
     }
+    console.log(getPlayerHand(socketId));
     return false;
 }
 
@@ -110,6 +114,7 @@ const getPlayerCardIdx = (socketId, card) => {
 }
 
 const canPlayCard = (socketId, cardName) => {
+    console.log('CAN PLAY CARD? ');
     const respectsColorPlayed = getRespectsColorPlayed(cardName);
     const hasRequestedColorInHand = getHasRequestedColorInHand(socketId, cardName);
     return respectsColorPlayed || !hasRequestedColorInHand;
@@ -119,13 +124,13 @@ const getRespectsColorPlayed = (cardName) => {
     if (currentDropZone.length === 0) {
         return true;
     } else {
-        return currentDropZone?.some(card => {
-            const cardColor = card.split('_')[0];
-            const refCardColor = cardName.split('_')[0];           
-            return cardColor === refCardColor;
-        });
-    }
+        const card = currentDropZone[0];
+        const cardColor = card.split('_')[0];
+        const refCardColor = cardName.split('_')[0];
+        return cardColor === refCardColor;
+    };
 }
+
 
 const getHasRequestedColorInHand = (socketId, cardName) => {
     if (currentDropZone.length === 0) {
@@ -183,13 +188,63 @@ const findTheWinningCardAndAddPoints = () => {
         if (cardColor === requestedTrickColor && cardValue > highestTrickValue) {
             highestTrickValue = cardValue;
             winningPlayerIndex = idx;
+            console.log('highestTrickValue ', highestTrickValue, 'winningPlayerIndex ', )
         }
     });
-    players[Object.keys(players)[winningPlayerIndex]].trickPoints += 1;
+    let pointsToAdd = 1;
+    if (hasBonhommeBrun()) {
+        pointsToAdd = pointsToAdd - 3;
+    }
+    if (hasBonhommeRouge()) {
+        pointsToAdd = pointsToAdd + 5;
+    }
+    players[Object.keys(players)[winningPlayerIndex]].trickPoints += pointsToAdd;
     return winningPlayerIndex;    
 }
 
+const hasBonhommeBrun = () => {
+    return currentDropZone?.some((card) => {
+        const cardColor = card.split('_')[0];
+        const cardValue = card.split('_')[1];
+        return (cardColor === 'al' && cardValue === '0');
+    });
+}
+
+const hasBonhommeRouge = () => {
+    return currentDropZone?.some((card) => {
+        const cardColor = card.split('_')[0];
+        const cardValue = card.split('_')[1];
+        return (cardColor === 'fr' && cardValue === '0')
+    });
+}
+
 io.on('connection', function (socket) {
+    console.log('connected with socket id ' + socket.id);
+    socket.on('disconnect', function () {
+        console.log('disconnected from socket id ', socket.id);
+        players = _.mapKeys(players, function (value, key) {
+            console.log(socket.id, key);
+            if (key === socket.id) {
+                return 'empty';
+            } else {
+                return key;
+            }
+        });
+        delete observators[socket.id];
+        console.log(players);
+    })
+    if (players['empty']) {
+        players = _.mapKeys(players, function (value, key) {
+            if (key === 'empty') {
+                return socket.id;
+            } else {
+                return key;
+            }
+        });
+        console.log(players);
+        io.emit('refreshCards', players, currentDropZone, deadZone);
+        return;
+    }
     if (Object.keys(players).length < 4) {
         players[socket.id] = {
             inHand: [],
@@ -220,7 +275,7 @@ io.on('connection', function (socket) {
         }
     }
 
-    console.log('Players : ', players, 'Observators : ', observators, 'Current drope zone : ', currentDropZone);
+    console.log('Current socket id : ', socket.id, 'Players : ', players, 'Observators : ', observators, 'Current drope zone : ', currentDropZone);
 
     socket.on('dealCards', function (socketId) {
         dealCards();
@@ -244,14 +299,10 @@ io.on('connection', function (socket) {
         cardMovedInHand(socketId, card, index);
         io.emit('cardMovedInHand', socketId, players, currentDropZone, deadZone);
     })
-
-
-    socket.once('disconnect', function () {
-        delete players[socket.id];
-        delete observators[socket.id];
-    })
+    
     
 })
 
-http.listen(3000, function () {
+http.listen(3000, function (socketId) {
+    console.log('hey ', socketId);
 });

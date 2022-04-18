@@ -28,6 +28,7 @@ export default class InteractivityHandler {
         });
 
         scene.input.on('drop', function (pointer, gameObject, dropZone) {
+            console.log('hey1, ', dropZone, scene.playerCardZone);
             if (scene.canDrop && dropZone === scene.dropZone) {
                 if (scene.GameHandler.isCurrentPlayerTurnDeck()
                     && scene.GameHandler.gameState === 'gameReady') {
@@ -35,7 +36,8 @@ export default class InteractivityHandler {
                     
                 }
             } else if (dropZone === scene.playerCardZone) {
-                const cardIndex = scene.DeckHandler.getCardRightBeforeIndex(pointer.upX);
+                const cardIndex = scene.DeckHandler.getCardRightBeforeIndex(pointer.upX, pointer.downX);
+                console.log('hey, ', cardIndex);
                 scene.socket.emit('cardMovedInHand', scene.socket.id, gameObject.data.list.card, cardIndex);              
             }
             scene.ZoneHandler.renderOutline(scene.dropZoneOutline, scene.dropZone, 0x526169);

@@ -16,13 +16,18 @@ export default class Game extends Phaser.Scene {
         })
     }
 
+    preloadIcons = () => {     
+        this.CardPreloadHandler.preloadIcons();
+    }
+
     preloadCardAssets = () => {
-        this.CardPreloadHandler = new CardPreloadHandler(this);
         this.CardPreloadHandler.preloadCards();
     }
 
     preload() {
+        this.CardPreloadHandler = new CardPreloadHandler(this);
         this.preloadCardAssets();
+        this.preloadIcons();
     }
 
     create() {
@@ -36,7 +41,7 @@ export default class Game extends Phaser.Scene {
         this.ZoneHandler = new ZoneHandler(this);
 
         this.aGrid = new AlignGrid({ scene: this, rows: 22, cols: 11 });
-        this.aGrid.showNumbers();
+        //this.aGrid.showNumbers();
 
         this.UIHandler = new UIHandler(this);
         this.UIHandler.buildUI();

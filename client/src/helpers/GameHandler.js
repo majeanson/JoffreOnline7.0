@@ -39,6 +39,27 @@ export default class GameHandler {
             scene.playerName?.setText(scene.GameHandler.getPlayerName());
         }
 
+        this.getGameScoreText = () => {
+            console.log('scores? ', this.players);
+            return this.getPlayer1AndPlayer3Score() + ' | ' + this.getPlayer2AndPlayer4Score();
+        }
+
+        this.getPlayer1AndPlayer3Score = () => {
+            if (!this.players || !Object.keys(this.players)[0] || !Object.keys(this.players)[2]) {
+                console.log('bad 0');
+                return '0';
+            }
+            return this.players[Object.keys(this.players)[0]]?.trickPoints + this.players[Object.keys(this.players)[2]]?.trickPoints ;
+        }
+
+        this.getPlayer2AndPlayer4Score = () => {
+            if (!this.players || !Object.keys(this.players)[1] || !Object.keys(this.players)[3]) {
+                console.log('bad 00');
+                return '0';
+            }
+            return parseInt(this.players[Object.keys(this.players)[1]].trickPoints) + parseInt(this.players[Object.keys(this.players)[3]].trickPoints);
+        }
+
         this.getGameStateMessage = () => {
             switch (this.gameState) {
                 case 'lobby': return 'Lobby en attente de joueurs'; break;
@@ -47,10 +68,16 @@ export default class GameHandler {
             
         }
 
+        this.refreshTexts = () => {
+            scene.playerName?.setText(scene.GameHandler.getPlayerName());
+            scene.score.setText(scene.GameHandler.getGameScoreText());
+        }
+
         this.refreshCards = (players, currentDropZone, deadZone) => {
             if (players) {
                 this.players = players;
             }
+            this.refreshTexts();
             scene.DeckHandler.renderCards(players, currentDropZone, deadZone);
         }
 

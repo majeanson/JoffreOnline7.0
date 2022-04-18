@@ -8,23 +8,31 @@ export default class UIHandler{
 
         this.buildScoreZone = () => {
             scene.scoreZone = this.zoneHandler.renderZone(960, 100, 1875, 165);
+            scene.scoreBoard = scene.add.image(0, 0, 'score');
+            scene.aGrid.placeAtIndex(25, scene.scoreBoard);
+            Align.scaleToGameW(scene.game, scene.scoreBoard, 0.45);
+            scene.score = scene.add.text(0, 0, '').setFontSize(180).setFontFamily("Trebuchet MS");
+            scene.score.setText(scene.GameHandler.getGameScoreText());
+            scene.aGrid.placeAtIndex(12.91, scene.score);
+            Align.scaleToGameW(scene.game, scene.score, 0.2);
         }
 
         this.buildDropZone = () => {
-            scene.dropZone = this.zoneHandler.renderZone(-100, 350, 4650, 385);
+            scene.dropZone = this.zoneHandler.renderZone(-100, 350, 4650, 285);
             scene.dropZoneOutline = this.zoneHandler.renderOutline(scene.add.graphics(), scene.dropZone, 0x526169);
         }
 
         this.buildPlayerCardZone = () => {
-            scene.playerCardZone = this.zoneHandler.renderZone(960, 750, 1875, 200);
+            scene.playerCardZone = this.zoneHandler.renderZone(-100, 750, 4650, 500);
+            scene.playerCardZoneOutline = this.zoneHandler.renderOutline(scene.add.graphics(), scene.playerCardZone, 0x523449);
             this.buildPlayerCardText();
         }
 
         this.buildGameText = () => {
             scene.backCard = scene.add.image(0, 0, 'back').setInteractive();
-            scene.aGrid.placeAtIndex(20, scene.backCard);
+            scene.aGrid.placeAtIndex(31, scene.backCard);
             Align.scaleToGameW(scene.game, scene.backCard, 0.1);
-            scene.messageStatus = scene.add.text(20, 20, "Message status").setFontSize(24).setFontFamily("Trebuchet MS");
+            scene.messageStatus = scene.add.text(20, 160, "Message status").setFontSize(18).setFontFamily("Trebuchet MS");
             scene.messageStatus.setText(scene.GameHandler.gameStateMessage);
             
         }
