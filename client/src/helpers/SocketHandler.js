@@ -7,29 +7,26 @@ export default class SocketHandler {
 
         scene.socket.on('refreshCards', (players, currentDropZone, deadDropZone) => {
             scene.GameHandler.refreshCards(players, currentDropZone, deadDropZone);
-            scene.GameHandler.changeGameState('gameReady', "C'est au joueur " + (scene.GameHandler.getCurrentTurnIdx() + 1) + ' de jouer')
+        })
+
+        scene.socket.on('refreshBackCard', () => {
+            scene.GameHandler.refreshBackCard();
         })
 
         scene.socket.on('changeTurn', () => {
             scene.GameHandler.changeTurn();
         })
 
-        scene.socket.on('changeGameState', (gameState, message = '') => {
+        scene.socket.on('changeGameState', (gameState, message = '', players, currentDropZone, deadDropZone) => {
             scene.GameHandler.changeGameState(gameState, message);
-            if (gameState === 'gameReady') {
-                scene.backCard.setInteractive();
-                scene.backCard.setTint('0xffffff');
-            } else {
-                scene.backCard.disableInteractive(); //to readd
-                scene.backCard.setTint(0x808080, 0xC0C0C0, 0xC0C0C0, 0x808080);
-            }
+            scene.GameHandler.refreshCards(players, currentDropZone, deadDropZone);
         })
 
-        scene.socket.on('cardPlayed', (socketId, cardName, index, result, currentDropZone, players, deadZone) => {
+        scene.socket.on('cardPlayed', (socketId, cardName, index, result, currentDropZone, players, deadDropZone) => {
             scene.DeckHandler.cardPlayed(socketId, cardName, index, currentDropZone);
             scene.GameHandler.changeTurn();
             scene.GameHandler.players = players;
-            scene.GameHandler.refreshCards(players, currentDropZone, deadZone);
+            scene.GameHandler.refreshCards(players, currentDropZone, deadDropZone);
             return true;
         })
 

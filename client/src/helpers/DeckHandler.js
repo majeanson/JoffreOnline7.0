@@ -8,8 +8,7 @@ export default class DeckHandler {
         this.deadZoneCards = [];
 
         this.renderCards = (players, currentDropZone, deadZone) => {
-            console.log(players, currentDropZone, deadZone);
-            this.playerZoneCards = players[scene.socket.id].inHand;
+            this.playerZoneCards = scene.GameHandler.getCurrentPlayer()?.inHand;
             this.dropZoneCards = currentDropZone;
             this.deadZoneCards = deadZone;
             this.renderPlayerZoneCards();
@@ -45,6 +44,7 @@ export default class DeckHandler {
                 scene.input.setDraggable(newCard, false);
             });          
         }
+
         this.renderDeadZoneCards = () => {
             let initialIndex = 500; // out of bounds
             this.deadZoneCards?.forEach(card => {
@@ -77,42 +77,6 @@ export default class DeckHandler {
             }      
         }
 
-        //this.getCardRightBeforeIndex = (upX, downX) => {
-        //    let condition = 'original';
-        //    let arrayToUse = this.cardObjects.slice();
-        //    if (downX < upX) {
-        //        const reverseClone = this.cardObjects.slice().reverse();
-        //        arrayToUse = reverseClone;
-        //        condition = 'reverse';
-        //    }
-        //    let index = 0;
-        //    let smallestIndex = 0;
-        //    let foundCardIdx = 0;
-        //    let shouldSkip = false;
-        //    arrayToUse.forEach((card) => {
-        //        if (!shouldSkip && this.playerZoneCards.includes(card.data?.list?.card)) {
-
-        //            console.log(card.data?.list?.card, condition, smallestIndex, upX, card.x);
-        //            if (condition === 'original') {
-        //                if (upX < card.x) {
-        //                    smallestIndex = index;
-                            
-        //                    shouldSkip = true;
-        //                }
-        //            } else {
-        //                if (upX > card.x) {
-        //                    smallestIndex = index;
-        //                    shouldSkip = true;
-        //                }
-        //            }
-        //            index += 1;
-        //        }
-        //    });
-        //    console.log(condition, smallestIndex);
-        //    foundCardIdx = smallestIndex;           
-        //    return foundCardIdx;
-        //}
-
         this.getCardRightBeforeIndex = (upX, downX) => {
             let foundCardIdx = 0;
             let shouldSkip = false;
@@ -127,27 +91,25 @@ export default class DeckHandler {
             arrayToUse.forEach((cardName, idx) => {
                 if (!shouldSkip) {
                     const foundCard = this.findCard(cardName);
-                    console.log(arrayToUse, condition, foundCard.x, upX, cardName);
                     if (foundCard && (condition === 'original' ? upX < foundCard.x : upX > foundCard.x)) {
                         foundCardIdx = condition === 'original' ? idx : arrayToUse.length - idx;
                         shouldSkip = true;
                     }
                 }
             });
-            console.log(foundCardIdx);
             return foundCardIdx;
         }
         
-        this.cardMovedInHand = (socketId, players, currentDropZone, deadZone) => {
+        this.cardMovedInHand = (socketId, players, currentDropZone, deadDropZone) => {
             if (socketId === scene.socket.id) {
-                scene.GameHandler.refreshCards(players, currentDropZone, deadZone);
+                scene.GameHandler.refreshCards(players, currentDropZone, deadDropZone);
             }
         }
 
-        this.endTurn = (currentDropZone, players, deadZone) => {
+        this.endTurn = (currentDropZone, players, deadDropZone) => {
             this.deadZoneCards?.push(... this.dropZoneCards);         
             this.dropZoneCards = [];            
-            scene.GameHandler.refreshCards(players, currentDropZone, deadZone);
+            scene.GameHandler.refreshCards(players, currentDropZone, deadDropZone);
         }
     }
 }

@@ -28,16 +28,14 @@ export default class InteractivityHandler {
         });
 
         scene.input.on('drop', function (pointer, gameObject, dropZone) {
-            console.log('hey1, ', dropZone, scene.playerCardZone);
             if (scene.canDrop && dropZone === scene.dropZone) {
                 if (scene.GameHandler.isCurrentPlayerTurnDeck()
-                    && scene.GameHandler.gameState === 'gameReady') {
+                    && scene.GameHandler.gameState === 'gameStarted') {
                     scene.socket.emit('cardPlayed', scene.socket.id, gameObject.data?.list.card);                   
                     
                 }
             } else if (dropZone === scene.playerCardZone) {
                 const cardIndex = scene.DeckHandler.getCardRightBeforeIndex(pointer.upX, pointer.downX);
-                console.log('hey, ', cardIndex);
                 scene.socket.emit('cardMovedInHand', scene.socket.id, gameObject.data.list.card, cardIndex);              
             }
             scene.ZoneHandler.renderOutline(scene.dropZoneOutline, scene.dropZone, 0x526169);
@@ -54,13 +52,12 @@ export default class InteractivityHandler {
         });
 
         scene.backCard?.on('pointerover', () => {
-            //scene.backCard.setTint('#ff59b4');
             scene.backCard.setTint(0xff00ff, 0xFF6600, 0xFFFF00, 0xFFFF00);
         })
 
         scene.backCard?.on('pointerdown', () => {
-            scene.backCard.setTint(0xFF6600, 0xff00ff, 0xFFFF00, 0xff00ff);
-            scene.socket.emit("dealCards", scene.socket.id);           
+            scene.backCard.setTint(0x808080, 0xC0C0C0, 0xC0C0C0, 0x808080);
+            scene.socket.emit("dealCards", scene.socket.id);
         })
 
         scene.backCard?.on('pointerup', () => {
@@ -68,7 +65,9 @@ export default class InteractivityHandler {
         })
 
         scene.backCard?.on('pointerout', () => {
-            scene.backCard.setTint('0xffffff');
+            if (scene.GameHandler.gameState !== 'gameStarted') {
+                scene.backCard.setTint('0xffffff');
+            }
         })
 
     }

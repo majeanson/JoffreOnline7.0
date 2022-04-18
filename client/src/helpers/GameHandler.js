@@ -5,7 +5,7 @@ export default class GameHandler {
         this.gameStateMessage = 'Bienvenue';
         this.playerTurn = 'player1';
 
-        this.players = {};
+        this.players = [];
 
         this.isCurrentPlayerTurnDeck = () => {
             const currentPlayer = this.getCurrentPlayer();
@@ -14,80 +14,86 @@ export default class GameHandler {
 
         this.getPlayerName = () => {
             let foundIndex = -1;
-            Object.keys(this.players).forEach((socketId, index) => {
-                if (socketId === scene.socket.id) {
+            this.players.forEach((player, index) => {
+                if (player.socketId === scene.socket.id) {
                     foundIndex = index
                 }
             });
             
-            const isMyTurn = this.players[Object.keys(this.players)[foundIndex]]?.isMyTurn;
-            const isDeckHolder = this.players[Object.keys(this.players)[foundIndex]]?.isDeckHolder;         
+            const isMyTurn = this.players[foundIndex]?.isMyTurn;
+            const isDeckHolder = this.players[foundIndex]?.isDeckHolder;         
             let text = scene.socket.id + ' Joueur ' + (foundIndex + 1);
             isMyTurn ? text = text + ' -\u00C0 vous de jouer !' : '';
             isDeckHolder ? text = text + ' [DEALER]' : '';
             return text;
         }
 
-        this.changeGameState = (gameState, message = '') => {
+        this.changeGameState = (gameState, message) => {
             this.gameState = gameState;
-            if (message) {
+            if (this.gameStateMessage) {
                 this.gameStateMessage = message;
-            } else {
-                this.gameStateMessage = this.getGameStateMessage();
-            }
+            } 
             scene.messageStatus.setText(this.gameStateMessage);
             scene.playerName?.setText(scene.GameHandler.getPlayerName());
         }
 
         this.getGameScoreText = () => {
-            console.log('scores? ', this.players);
             return this.getPlayer1AndPlayer3Score() + ' | ' + this.getPlayer2AndPlayer4Score();
         }
 
         this.getPlayer1AndPlayer3Score = () => {
-            if (!this.players || !Object.keys(this.players)[0] || !Object.keys(this.players)[2]) {
-                console.log('bad 0');
+            if (!this.players || !this.players[0] || !this.players[2]) {
                 return '0';
             }
-            return this.players[Object.keys(this.players)[0]]?.trickPoints + this.players[Object.keys(this.players)[2]]?.trickPoints ;
+            return parseInt(this.players[0]?.trickPoints) + parseInt(this.players[2]?.trickPoints);
         }
 
         this.getPlayer2AndPlayer4Score = () => {
-            if (!this.players || !Object.keys(this.players)[1] || !Object.keys(this.players)[3]) {
-                console.log('bad 00');
+            if (!this.players || !this.players[1] || !this.players[3]) {
                 return '0';
             }
-            return parseInt(this.players[Object.keys(this.players)[1]].trickPoints) + parseInt(this.players[Object.keys(this.players)[3]].trickPoints);
-        }
-
-        this.getGameStateMessage = () => {
-            switch (this.gameState) {
-                case 'lobby': return 'Lobby en attente de joueurs'; break;
-                case 'gameReady': return 'La partie est prète à débuter'; break;
-            }
-            
+            return parseInt(this.players[1].trickPoints) + parseInt(this.players[3].trickPoints);
         }
 
         this.refreshTexts = () => {
-            scene.playerName?.setText(scene.GameHandler.getPlayerName());
-            scene.score.setText(scene.GameHandler.getGameScoreText());
+            scene.playerName?.setText(this.getPlayerName());
+            scene.score.setText(this.getGameScoreText());
+            scene.messageStatus.setText(this.gameStateMessage);
         }
 
-        this.refreshCards = (players, currentDropZone, deadZone) => {
+        this.refreshBackCard = () => {
+            if (this.gameState === 'gameReady' && (!this.thereIsADeckHolder() || (this.thereIsADeckHolder() && this.getCurrentPlayer()?.isDeckHolder))) {
+                scene.backCard.setInteractive();
+                scene.backCard.setTint('0xffffff');
+            } else {
+                scene.backCard.setTint(0x808080, 0xC0C0C0, 0xC0C0C0, 0x808080);
+                scene.backCard.disableInteractive(); //to readd
+            }
+        }
+
+        this.refreshCards = (players, currentDropZone, deadZoneDrop) => {
             if (players) {
                 this.players = players;
             }
+            scene.DeckHandler.renderCards(players, currentDropZone, deadZoneDrop);
             this.refreshTexts();
-            scene.DeckHandler.renderCards(players, currentDropZone, deadZone);
+        }
+
+        this.getPlayerBySocketId = (socketId) => {
+            return this.players.find(player => player.socketId === socketId)
         }
 
         this.getCurrentPlayer = () => {
-            return this.players[scene.socket.id];
+            return this.getPlayerBySocketId(scene.socket.id);
+        }
+
+        this.thereIsADeckHolder = () => {
+            return this.players.some(player => player.isDeckHolder);
         }
 
         this.getCurrentTurnIdx = () => {
             let currentTurnIdx = 0;
-            Object.values(this.players).forEach((player, idx) => {
+            this.players.forEach((player, idx) => {
                 if (player.isMyTurn) {
                     currentTurnIdx = idx;
                 }
@@ -102,7 +108,7 @@ export default class GameHandler {
             if (nextTurnIdx === 4 /* last */) {
                 nextTurnIdx = 0;
             }
-            Object.values(this.players).forEach((player, idx, arr) => {
+            this.players.forEach((player, idx, arr) => {
                 if (idx === currentTurnIdx) {
                     arr[idx].isMyTurn = false;
                 } else if (idx === nextTurnIdx) {

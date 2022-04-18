@@ -4,10 +4,46 @@ const http = require('http').createServer(server);
 const shuffle = require('shuffle-array');
 const cors = require('cors');
 
-let players = {};
-let observators = {};
+let gameState = 'init';
+let gameStateMessage = 'Bienvenue';
+let players = [];
+let observators = [];
 let currentDropZone = [];
-let deadZone = [];
+let deadZone = [
+    'al_0',
+    'al_1',
+    'al_2',
+    'al_3',
+    'al_4',
+    'al_5',
+    'al_6',
+    'al_7',
+    'an_0',
+    'an_1',
+    'an_2',
+    'an_3',
+    'an_4',
+    'an_5',
+    'an_6',
+    'an_7',
+    'fr_0',
+    'fr_1',
+    'fr_2',
+    'fr_3',
+    'fr_4',
+    'fr_5',
+    'fr_6',
+    'fr_7',
+    'ru_0',
+    'ru_1',
+    'ru_2',
+    'ru_3',
+    'ru_4',
+    'ru_5',
+    'ru_6',
+    'ru_7'
+];
+
 
 const io = require('socket.io')(http, {
     cors: {
@@ -58,30 +94,32 @@ const getShuffledCards = () => {
     return clone;
 }
 
-const getPlayerHand = (socketId) => {
-    return players[socketId].inHand;
+const getPlayerHand = (socketId) => {   
+    return getPlayerBySocketId(socketId).inHand;
 }
 
 const getPlayerIndex = (socketId) => {
     let foundIndex = 0;
-    Object.keys(players).forEach((aSocketId, idx) => {
-        if (aSocketId == socketId) {
+    players.forEach((player, idx) => {
+        if (player.socketId == socketId) {
             foundIndex = idx;
         }
+        idx += 1;
     });
     return foundIndex;
 }
 
 const cardPlayed = (socketId, cardName) => {
     if (canPlayCard(socketId, cardName)) {
-        players[socketId].inHand = players[socketId]?.inHand?.filter(aCardName => aCardName !== cardName);
-        players[socketId].isMyTurn = false;
+        const player = getPlayerBySocketId(socketId);
+        player['inHand'] = player?.inHand?.filter(aCardName => aCardName !== cardName);
+        player['isMyTurn'] = false;
         const playerIndex = getPlayerIndex(socketId);
         let nextPlayerIndex = playerIndex + 1;
         if (nextPlayerIndex === 4) {
             nextPlayerIndex = 0;
         }
-        players[Object.keys(players)[nextPlayerIndex]]['isMyTurn'] = true;
+        players[nextPlayerIndex]['isMyTurn'] = true;
         
         currentDropZone.push(cardName);
         return true;
@@ -89,23 +127,20 @@ const cardPlayed = (socketId, cardName) => {
     return false;
 }
 
+const arraymove = (arr, fromIndex, toIndex) => {
+    var element = arr[fromIndex];
+    arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, element);
+}
+
 const cardMovedInHand = (socketId, card, index) => {
-
-    function arraymove(arr, fromIndex, toIndex) {
-        var element = arr[fromIndex];
-        arr.splice(fromIndex, 1);
-        arr.splice(toIndex, 0, element);
-        console.log(arr);
-    }
-    
-
+   
     if (index > -1) {
         const movingCardIdx = getPlayerCardIdx(socketId, card);
         if (movingCardIdx > -1) {
             arraymove(getPlayerHand(socketId), movingCardIdx, index)
         }
     }
-    console.log(getPlayerHand(socketId));
     return false;
 }
 
@@ -113,8 +148,7 @@ const getPlayerCardIdx = (socketId, card) => {
     return getPlayerHand(socketId)?.findIndex(aCard => aCard === card);
 }
 
-const canPlayCard = (socketId, cardName) => {
-    console.log('CAN PLAY CARD? ');
+const canPlayCard = (socketId, cardName) => {   
     const respectsColorPlayed = getRespectsColorPlayed(cardName);
     const hasRequestedColorInHand = getHasRequestedColorInHand(socketId, cardName);
     return respectsColorPlayed || !hasRequestedColorInHand;
@@ -156,39 +190,55 @@ const getHasRequestedColorInHand = (socketId, cardName) => {
     })
 }
 
+const getPlayerBySocketId = (socketId) => {
+    return players.find(player => player.socketId === socketId);
+}
+
+const getPlayerIndexBySocketId = (socketId) => {
+    return players.findIndex(player => player.socketId === socketId);
+}
+
 const dealCards = (socketId) => {
     const shuffledCards = getShuffledCards();
     currentDropZone = [];
-    Object.values(players).forEach(player => {
-        player.inHand = [];
-        player.inHand = shuffledCards.splice(0, 8);
+    players.forEach(player => {
+        player['inHand'] = [];
+        player['inHand'] = shuffledCards.splice(0, 8);
+        player['isDeckHolder'] = false;
+        player['isMyTurn'] = false;
     });
+    const player = getPlayerBySocketId(socketId);
+    if (player) {
+        getPlayerBySocketId(socketId)['isDeckHolder'] = true;
+        getPlayerBySocketId(socketId)['isMyTurn'] = true;
+        arraymove(players, getPlayerIndexBySocketId(socketId), 0);
+    }
+    deadZone = [];
 }
+
 const endTheTrick = () => {
     const winningPlayerIndex = findTheWinningCardAndAddPoints()
     deadZone.push(...currentDropZone);
     currentDropZone = [];
-    players[Object.keys(players)[0]]['isMyTurn'] = false;
-    players[Object.keys(players)[1]]['isMyTurn'] = false;
-    players[Object.keys(players)[2]]['isMyTurn'] = false;
-    players[Object.keys(players)[3]]['isMyTurn'] = false;
-    players[Object.keys(players)[winningPlayerIndex]]['isMyTurn'] = true;
-
-
+    players[0]['isMyTurn'] = false;
+    players[1]['isMyTurn'] = false;
+    players[2]['isMyTurn'] = false;
+    players[3]['isMyTurn'] = false;
+    players[winningPlayerIndex]['isMyTurn'] = true;
     io.emit('endTheTrick', currentDropZone, players, deadZone, winningPlayerIndex);
 }
 
 const findTheWinningCardAndAddPoints = () => {
     let winningPlayerIndex = 0;
     const requestedTrickColor = currentDropZone[0].split('_')[0];
-    let highestTrickValue = currentDropZone[0].split('_')[1];
+    let highestTrickValue = parseInt(currentDropZone[0].split('_')[1]);
     currentDropZone?.forEach((card, idx) => {        
         const cardColor = card.split('_')[0];
-        const cardValue = card.split('_')[1];
+        const cardValue = parseInt(card.split('_')[1]);
+        console.log(cardValue, cardColor);
         if (cardColor === requestedTrickColor && cardValue > highestTrickValue) {
             highestTrickValue = cardValue;
             winningPlayerIndex = idx;
-            console.log('highestTrickValue ', highestTrickValue, 'winningPlayerIndex ', )
         }
     });
     let pointsToAdd = 1;
@@ -198,8 +248,10 @@ const findTheWinningCardAndAddPoints = () => {
     if (hasBonhommeRouge()) {
         pointsToAdd = pointsToAdd + 5;
     }
-    players[Object.keys(players)[winningPlayerIndex]].trickPoints += pointsToAdd;
-    return winningPlayerIndex;    
+    const realWinningPlayerIndex = players.findIndex(player => player.isMyTurn) + winningPlayerIndex;
+    players[realWinningPlayerIndex].trickPoints += pointsToAdd;
+    console.log('highestTrickValue ', highestTrickValue, 'winningPlayerIndex ', winningPlayerIndex, 'realWinningPlayerIndex ', realWinningPlayerIndex);
+    return realWinningPlayerIndex;
 }
 
 const hasBonhommeBrun = () => {
@@ -219,67 +271,83 @@ const hasBonhommeRouge = () => {
 }
 
 io.on('connection', function (socket) {
-    console.log('connected with socket id ' + socket.id);
+
+    console.log('connected with socket id ' + socket.id, players);
     socket.on('disconnect', function () {
         console.log('disconnected from socket id ', socket.id);
-        players = _.mapKeys(players, function (value, key) {
-            console.log(socket.id, key);
-            if (key === socket.id) {
-                return 'empty';
-            } else {
-                return key;
-            }
-        });
-        delete observators[socket.id];
-        console.log(players);
-    })
-    if (players['empty']) {
-        players = _.mapKeys(players, function (value, key) {
-            if (key === 'empty') {
-                return socket.id;
-            } else {
-                return key;
-            }
-        });
-        console.log(players);
-        io.emit('refreshCards', players, currentDropZone, deadZone);
-        return;
+        if (players) {
+            players = players?.map(player => {
+                if (player.socketId === socket.id) {
+                    return {
+                        ...player,
+                        socketId: 'empty'
+                    }
+                } else {
+                    return player;
+                };
+            });
+        }
+        
+
+    });
+
+    const changeGameState = (aGameState, message) => {
+        gameState = aGameState;
+        gameStateMessage = message;
+        console.log('changeGameState', gameState, gameStateMessage);
+        io.emit('changeGameState', gameState, gameStateMessage, players, currentDropZone, deadZone);
     }
-    if (Object.keys(players).length < 4) {
-        players[socket.id] = {
+
+    const emptyPlayer = players?.find(player => player.socketId === 'empty');
+    if (emptyPlayer) {
+        players = players?.map(player => {
+            if (player.socketId === 'empty') {
+                return {
+                    ...player,
+                    socketId: socket.id
+                }
+            } else {
+                return player;
+            };
+        });
+    }
+    if (players?.length < 4 && !getPlayerBySocketId(socket.id)) {
+        players?.push({
             inHand: [],
             isDeckHolder: false,
             isMyTurn: false,
             trickPoints: 0,
-        }
-        if (Object.keys(players).length === 1) {
-            players[socket.id]['isDeckHolder'] = true;
-            players[socket.id]['isMyTurn'] = true;
-        }
-
-        if (Object.keys(players).length === 4) {
-            io.emit('changeGameState', 'gameReady', 'La partie peut d\u00E9buter');
-            const hasOneDeckHolder = Object.values(players).some(player => {
-                player.isDeckHolder === true;
-            });
-            if (!hasOneDeckHolder) {
-                players[Object.keys(players)[0]]['isDeckHolder'] = true;
-                players[Object.keys(players)[0]]['isMyTurn'] = true;
+            socketId: socket.id
+        });
+        if (players?.length === 4) {
+            if (gameState === 'init' || gameState === 'lobby') {
+                changeGameState('gameReady', 'La partie peut d\u00E9buter');
             }
         } else {
-            io.emit('changeGameState', 'lobby', 'Le lobby doit se remplir');
+            if (gameState === 'init') {
+                changeGameState('lobby', 'Le lobby doit se remplir');
+            }
         }
 
-    } else {
-        observators[socket.id] = {
-        }
+    } else if (!getPlayerBySocketId(socket.id)) {
+        observators.push(socket.id);
     }
+    io.emit('refreshCards', players, currentDropZone, deadZone);
+    io.emit('refreshBackCard');
+    io.emit('changeGameState', gameState, gameStateMessage, players, currentDropZone, deadZone);
 
-    console.log('Current socket id : ', socket.id, 'Players : ', players, 'Observators : ', observators, 'Current drope zone : ', currentDropZone);
+    console.log('Current socket id : ', socket.id, 'Players : ', players, 'Observators : ', observators, 'Current drop zone : ', currentDropZone, 'Current dead zone : ', deadZone);
 
     socket.on('dealCards', function (socketId) {
-        dealCards();
+        dealCards(socketId);
         io.emit('refreshCards', players, currentDropZone, deadZone);
+        io.emit('changeGameState', 'gameStarted', 'La partie a d\u00E9buter. \u000A' + "C'est au joueur 1 \u00E0 jouer", players, currentDropZone, deadZone);
+        io.emit('refreshBackCard');
+    })
+
+    socket.on('changeGameState', function (gameState, message) {
+        changeGameState(gameState, message);
+        io.emit('changeGameState', gameState, message, players, currentDropZone, deadZone);
     })
 
     socket.on('cardPlayed', function (socketId, cardName) {
@@ -304,5 +372,4 @@ io.on('connection', function (socket) {
 })
 
 http.listen(3000, function (socketId) {
-    console.log('hey ', socketId);
 });
