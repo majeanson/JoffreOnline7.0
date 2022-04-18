@@ -38,7 +38,7 @@ export default class GameHandler {
         }
 
         this.getGameScoreText = () => {
-            return this.getPlayer1AndPlayer3Score() + ' | ' + this.getPlayer2AndPlayer4Score();
+            return this.getPlayer1AndPlayer3Score() + ' - ' + this.getPlayer2AndPlayer4Score();
         }
 
         this.getPlayer1AndPlayer3Score = () => {

@@ -31,7 +31,7 @@ export default class Game extends Phaser.Scene {
     }
 
     create() {
-      
+        console.log('allo');
         this.cameras.main.setBackgroundColor('#62b1d9');
         this.CardHandler = new CardHandler(this);
         this.DeckHandler = new DeckHandler(this);
